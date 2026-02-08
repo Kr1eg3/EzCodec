@@ -1,0 +1,13 @@
+build/
+cmake-build-*/
+.vs/
+.vscode/
+*.exe
+*.obj
+*.lib
+*.pdb
+*.ilk
+*.ezc
+*.png
+!tests/data/*.png
+CMakeUserPresets.json
