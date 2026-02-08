@@ -18,6 +18,18 @@ PNG -> 8x8 blocks -> Forward DCT -> Quantization -> .ezc file
 - Multi-threaded processing via a custom thread pool
 - Uses [stb_image](https://github.com/nothings/stb) for PNG I/O
 
+### Example (quality = 50)
+
+| Original | After encode/decode |
+|:---:|:---:|
+| ![before](assets/before.png) | ![after](assets/after.png) |
+
+### Quality comparison
+
+![comparison](assets/comparison.png)
+
+![closeup](assets/closeup.png)
+
 ## Usage
 
 ```bash

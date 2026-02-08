@@ -10,4 +10,5 @@ cmake-build-*/
 *.ezc
 *.png
 !tests/data/*.png
+!assets/*.png
 CMakeUserPresets.json
