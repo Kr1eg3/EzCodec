@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EzCodec — Презентация</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #ff7b72;
+    --accent4: #d2a8ff;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --code-bg: #0d1117;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Slides */
+  .slides { width: 100%; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.out {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .nav button {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .nav button:hover { background: var(--border); border-color: var(--accent); }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+
+  .nav .counter {
+    color: var(--muted);
+    font-size: 13px;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* Dots */
+  .dots {
+    position: fixed;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .dot.active { background: var(--accent); transform: scale(1.4); }
+
+  /* Typography */
+  h1 { font-size: 52px; font-weight: 700; letter-spacing: -1px; line-height: 1.1; }
+  h2 { font-size: 36px; font-weight: 600; margin-bottom: 32px; letter-spacing: -0.5px; }
+  h3 { font-size: 22px; font-weight: 600; color: var(--accent); margin-bottom: 12px; }
+  p  { font-size: 18px; line-height: 1.7; color: var(--muted); max-width: 800px; text-align: center; }
+  .lead { font-size: 22px; color: var(--text); }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .tag-blue  { background: #1f3a5c; color: var(--accent); }
+  .tag-green { background: #1a3327; color: var(--accent2); }
+  .tag-red   { background: #3d1f1f; color: var(--accent3); }
+  .tag-purple{ background: #2d1f3d; color: var(--accent4); }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    text-align: left;
+    overflow-x: auto;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .kw  { color: #ff7b72; }  /* keyword */
+  .fn  { color: #d2a8ff; }  /* function */
+  .str { color: #a5d6ff; }  /* string/type */
+  .num { color: #79c0ff; }  /* number */
+  .cm  { color: #8b949e; font-style: italic; }  /* comment */
+  .op  { color: #58a6ff; }  /* operator */
+
+  /* Pipeline */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1000px;
+  }
+
+  .pipe-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pipe-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 110px;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .pipe-box.hl-blue   { border-color: var(--accent);  background: #1f3a5c22; }
+  .pipe-box.hl-green  { border-color: var(--accent2); background: #1a332722; }
+  .pipe-box.hl-red    { border-color: var(--accent3); background: #3d1f1f22; }
+  .pipe-box.hl-purple { border-color: var(--accent4); background: #2d1f3d22; }
+
+  .pipe-label { font-size: 11px; color: var(--muted); }
+
+  .pipe-arrow {
+    font-size: 20px;
+    color: var(--border);
+    padding: 0 6px;
+    margin-top: -20px;
+  }
+
+  /* Grid layouts */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 960px; width: 100%; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; max-width: 960px; width: 100%; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: left;
+  }
+
+  .card h3 { font-size: 16px; margin-bottom: 10px; }
+  .card p  { font-size: 14px; text-align: left; margin: 0; }
+
+  /* File format */
+  .hex-table { border-collapse: collapse; font-family: 'SF Mono', monospace; font-size: 13px; }
+  .hex-table td, .hex-table th {
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    text-align: left;
+  }
+  .hex-table th { background: var(--surface2); color: var(--muted); font-weight: 500; }
+  .hex-table tr:hover td { background: var(--surface2); }
+
+  .hl-row-blue   td:first-child { border-left: 3px solid var(--accent); }
+  .hl-row-green  td:first-child { border-left: 3px solid var(--accent2); }
+  .hl-row-purple td:first-child { border-left: 3px solid var(--accent4); }
+
+  /* Images */
+  .img-row { display: flex; gap: 20px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+  .img-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .img-card img {
+    width: 200px; height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .img-card span { font-size: 12px; color: var(--muted); }
+
+  /* Math formula */
+  .formula {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 28px;
+    font-family: 'SF Mono', monospace;
+    font-size: 17px;
+    text-align: center;
+    color: var(--accent4);
+  }
+
+  /* Spiral canvas */
+  canvas { border-radius: 12px; border: 1px solid var(--border); }
+
+  /* HSL disk */
+  .disk-wrap { display: flex; align-items: center; gap: 48px; }
+
+  /* Stat badges */
+  .stat { text-align: center; }
+  .stat .val { font-size: 48px; font-weight: 700; color: var(--accent); }
+  .stat .lbl { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  /* Title gradient */
+  .grad { background: linear-gradient(135deg, var(--accent), var(--accent4)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  /* Keyboard hint */
+  .kbd-hint {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  hr.sep { border: none; border-top: 1px solid var(--border); width: 100%; max-width: 600px; margin: 16px auto; }
+</style>
+</head>
+<body>
+
+<div class="slides" id="slides">
+
+  <!-- ── SLIDE 1: Title ─────────────────────────────────── -->
+  <div class="slide active" id="s0">
+    <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:24px;">
+      <div style="display:flex; gap:10px; margin-bottom:8px;">
+        <span class="tag tag-blue">C++17</span>
+        <span class="tag tag-green">DCT</span>
+        <span class="tag tag-purple">Fermat Spiral</span>
+      </div>
+      <h1><span class="grad">EzCodec</span></h1>
+      <p class="lead">DCT-based image compression с кодированием цвета<br>через спираль Ферма</p>
+      <p>Образовательная реализация JPEG-подобного кодека<br>с поддержкой RGB и экспериментального Fermat-режима</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2: Architecture ──────────────────────────── -->
+  <div class="slide" id="s1">
+    <h2>Архитектура проекта</h2>
+    <div class="grid3" style="margin-bottom:24px;">
+      <div class="card">
+        <h3>Ввод/Вывод</h3>
+        <p style="color:var(--muted); font-size:13px;">
+          <code style="color:var(--accent2)">Picture</code> — загрузка PNG через stb_image, разбивка на блоки<br><br>
+          <code style="color:var(--accent2)">EzcFormat</code> — бинарный формат .ezc, сериализация заголовка и блоков
+        </p>
+      </div>
+      <div class="card">
+        <h3>Преобразования</h3>
+        <p style="color:var(--muted); font-size:13px;">
+          <code style="color:var(--accent)">DCT</code> — прямое и обратное ДКП (наивный O(n⁴))<br><br>
+          <code style="color:var(--accent)">Quantization</code> — JPEG-таблица квантования, масштабирование по quality
+        </p>
+      </div>
+      <div class="card">
+        <h3>Инфраструктура</h3>
+        <p style="color:var(--muted); font-size:13px;">
+          <code style="color:var(--accent4)">ThreadPool</code> — параллельная обработка блоков<br><br>
+          <code style="color:var(--accent4)">FermatColor</code> — кодирование цвета одним числом t ∈ [0,1]
+        </p>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; font-size:13px; color:var(--muted);">
+      <span>📁 8 заголовков</span>
+      <span>·</span>
+      <span>📄 6 источников</span>
+      <span>·</span>
+      <span>🔧 CMake 3.16+</span>
+      <span>·</span>
+      <span>🧵 std::thread</span>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: Encode Pipeline ──────────────────────── -->
+  <div class="slide" id="s2">
+    <h2>Пайплайн кодирования</h2>
+    <div class="pipeline" style="margin-bottom:32px;">
+      <div class="pipe-step">
+        <div class="pipe-box hl-blue">PNG</div>
+        <div class="pipe-label">входной файл</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-blue">Загрузка<br>RGB</div>
+        <div class="pipe-label">stb_image</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-green">8×8<br>блоки</div>
+        <div class="pipe-label">Picture::split</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-green">Прямое<br>ДКП</div>
+        <div class="pipe-label">DCT::forward</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-red">Квантиза-<br>ция</div>
+        <div class="pipe-label">quality 1–100</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-purple">.ezc</div>
+        <div class="pipe-label">бинарный файл</div>
+      </div>
+    </div>
+    <pre>
+<span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; numChannels; c++) {
+    <span class="str">auto</span>&amp; blocks = picture.<span class="fn">getChannelBlocks</span>(c);
+    <span class="str">auto</span> dctBlocks   = <span class="fn">dctAndQuantize</span>(blocks, quality);   <span class="cm">// ← параллельно</span>
+    allQuantized[c] = dctBlocks;
+}
+<span class="fn">writeEzc</span>(outputEzc, header, allQuantized);</pre>
+  </div>
+
+  <!-- ── SLIDE 4: Decode Pipeline ──────────────────────── -->
+  <div class="slide" id="s3">
+    <h2>Пайплайн декодирования</h2>
+    <div class="pipeline" style="margin-bottom:32px;">
+      <div class="pipe-step">
+        <div class="pipe-box hl-purple">.ezc</div>
+        <div class="pipe-label">входной файл</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-red">Деквантиза-<br>ция</div>
+        <div class="pipe-label">quality из header</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-green">Обратное<br>ДКП</div>
+        <div class="pipe-label">DCT::inverse</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-green">Сборка<br>пикселей</div>
+        <div class="pipe-label">interleaved RGB</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-blue">PNG</div>
+        <div class="pipe-label">stb_image_write</div>
+      </div>
+    </div>
+    <pre>
+<span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; numChannels; c++) {
+    <span class="str">auto</span> reconstructed = <span class="fn">dequantizeAndIDCT</span>(allQuantized[c], quality);
+    <span class="kw">for</span> (<span class="kw">const auto</span>&amp; block : reconstructed) {
+        <span class="cm">// запись в interleaved буфер pixels[...* numChannels + c]</span>
+    }
+}
+<span class="fn">stbi_write_png</span>(output, w, h, numChannels, pixels.<span class="fn">data</span>(), stride);</pre>
+  </div>
+
+  <!-- ── SLIDE 5: DCT ───────────────────────────────────── -->
+  <div class="slide" id="s4">
+    <h2>Дискретное косинусное преобразование</h2>
+    <div class="grid2" style="align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="formula">
+          F(u,v) = ¼ C(u)C(v) Σ Σ f(x,y)·cos(...)
+        </div>
+        <div class="card">
+          <h3>Почему 8×8?</h3>
+          <p style="font-size:14px;">Стандарт JPEG. Достаточно мало для локальности (соседние пиксели коррелированы) и достаточно велико для эффективного сжатия. Квантизационная таблица 8×8.</p>
+        </div>
+        <div class="card">
+          <h3>Квантизация</h3>
+          <p style="font-size:14px;">Каждый коэффициент делится на значение из таблицы, масштабированное quality. Высокочастотные компоненты делятся сильнее — человеческий глаз их не замечает.</p>
+        </div>
+      </div>
+      <div>
+        <canvas id="dctCanvas" width="380" height="380"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6: File Format ──────────────────────────── -->
+  <div class="slide" id="s5">
+    <h2>Формат файла .ezc</h2>
+    <div style="display:flex; gap:40px; align-items:flex-start;">
+      <table class="hex-table">
+        <tr><th>Offset</th><th>Байт</th><th>Поле</th></tr>
+        <tr class="hl-row-blue"><td>0</td><td>4</td><td><code>magic</code> "EZC\0"</td></tr>
+        <tr class="hl-row-blue"><td>4</td><td>1</td><td><code>version</code> (1/2/3)</td></tr>
+        <tr class="hl-row-green"><td>5</td><td>2</td><td><code>width</code> (LE)</td></tr>
+        <tr class="hl-row-green"><td>7</td><td>2</td><td><code>height</code> (LE)</td></tr>
+        <tr class="hl-row-green"><td>9</td><td>1</td><td><code>quality</code></td></tr>
+        <tr class="hl-row-green"><td>10</td><td>1</td><td><code>blockDim</code> = 8</td></tr>
+        <tr class="hl-row-green"><td>11</td><td>2</td><td><code>blockCountX</code></td></tr>
+        <tr class="hl-row-green"><td>13</td><td>2</td><td><code>blockCountY</code></td></tr>
+        <tr class="hl-row-green"><td>15</td><td>1</td><td><code>channels</code> (1/3)</td></tr>
+        <tr class="hl-row-purple"><td>16</td><td>1</td><td><code>fermat_N</code> <span style="color:var(--muted)">(v3)</span></td></tr>
+        <tr class="hl-row-purple"><td>17</td><td>1</td><td><code>fermat_L×100</code> <span style="color:var(--muted)">(v3)</span></td></tr>
+        <tr><td>18+</td><td>128×N</td><td>блоки: 64×int16_t</td></tr>
+      </table>
+      <div style="display:flex; flex-direction:column; gap:16px; max-width:340px;">
+        <div class="card">
+          <h3>Обратная совместимость</h3>
+          <p style="font-size:14px;">v1 писал <code>reserved=0</code> — читается как <code>channels=0</code>, трактуется как 1 (grayscale). v2 = RGB. v3 = Fermat-режим.</p>
+        </div>
+        <div class="card">
+          <h3>Блоки — Channel-major</h3>
+          <p style="font-size:14px;">Сначала все блоки канала R, затем G, затем B. Каждый блок — 64 значения int16_t в little-endian.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7: Fermat Idea ──────────────────────────── -->
+  <div class="slide" id="s6">
+    <h2>Идея спирали Ферма</h2>
+    <div class="disk-wrap">
+      <div style="display:flex; flex-direction:column; gap:16px; max-width:360px;">
+        <p class="lead" style="text-align:left; font-size:18px;">Один float <code style="color:var(--accent)">t ∈ [0,1]</code> → любой цвет</p>
+        <p style="text-align:left; font-size:15px;">
+          Спираль вписана в HSL-диск. Равномерное покрытие площади гарантировано математически: <code>r = √t</code>.
+        </p>
+        <div class="formula" style="font-size:14px; text-align:left; padding:14px 18px;">
+          S = √t<br>
+          H = frac(N·t)<br>
+          L = const (0.5)
+        </div>
+        <div style="display:flex; gap:12px;">
+          <div class="stat">
+            <div class="val" style="font-size:32px;">3×</div>
+            <div class="lbl">меньше блоков</div>
+          </div>
+          <div class="stat">
+            <div class="val" style="font-size:32px; color:var(--accent4);">N</div>
+            <div class="lbl">витков = «битглубина»</div>
+          </div>
+        </div>
+      </div>
+      <canvas id="spiralCanvas" width="340" height="340"></canvas>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 8: Fermat Pipeline ──────────────────────── -->
+  <div class="slide" id="s7">
+    <h2>Fermat-пайплайн кодирования</h2>
+    <div class="pipeline" style="margin-bottom:28px;">
+      <div class="pipe-step">
+        <div class="pipe-box hl-blue">RGB<br>пиксель</div>
+        <div class="pipe-label">r, g, b</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-purple">RGB→HSL<br>→ t</div>
+        <div class="pipe-label">Fermat::fromRGB</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-purple">t × 4095</div>
+        <div class="pipe-label">12-bit precision</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-green">ДКП +<br>кванти-<br>зация</div>
+        <div class="pipe-label">1 канал</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-box hl-red">.ezc<br>v3</div>
+        <div class="pipe-label">18-byte header</div>
+      </div>
+    </div>
+    <pre>
+<span class="cm">// Encode: RGB → t</span>
+<span class="kw">float</span> t = Fermat::<span class="fn">fromRGB</span>(r, g, b, N);
+block.<span class="fn">at</span>(row, col) = <span class="kw">uint16_t</span>(t * <span class="num">4095.0f</span>);
+
+<span class="cm">// Decode: t → RGB</span>
+<span class="kw">float</span> t = <span class="fn">clamp</span>(block.<span class="fn">at</span>(y, x), <span class="num">0</span>, <span class="num">4095</span>) / <span class="num">4095.0f</span>;
+Fermat::<span class="fn">toRGB</span>(t, N, L, r, g, b);</pre>
+  </div>
+
+  <!-- ── SLIDE 9: Fermat Math ───────────────────────────── -->
+  <div class="slide" id="s8">
+    <h2>Математика обратной функции</h2>
+    <div class="grid2" style="align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+          <h3>Два источника t</h3>
+          <p style="font-size:14px;">
+            <b style="color:var(--accent)">t<sub>S</sub> = S²</b> — из насыщенности (точно, без двусмысленности)<br><br>
+            <b style="color:var(--accent4)">t<sub>H</sub> = (H + k) / N</b> — из тона, k = 0…N-1 (неоднозначно)
+          </p>
+        </div>
+        <div class="card">
+          <h3>Алгоритм восстановления</h3>
+          <p style="font-size:14px;">
+            Перебрать k от 0 до N-1, найти t<sub>H</sub> ближайший к t<sub>S</sub>.
+            Взвешенное среднее: у краёв диска доверяем Hue, у центра — Saturation.
+          </p>
+        </div>
+        <div class="formula" style="font-size:14px;">
+          t = (1−S)·t<sub>S</sub> + S·t<sub>H</sub>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Точность round-trip</h3>
+        <table style="font-size:13px; border-collapse:collapse; width:100%;">
+          <tr style="color:var(--muted);">
+            <td style="padding:6px 8px;">Зона</td>
+            <td style="padding:6px 8px;">Источник ошибки</td>
+            <td style="padding:6px 8px;">Точность</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; color:var(--accent2);">S → 1 (края)</td>
+            <td style="padding:6px 8px;">8-bit PNG</td>
+            <td style="padding:6px 8px;">~1/(255·N)</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; color:var(--accent);">S → 0 (центр)</td>
+            <td style="padding:6px 8px;">Hue нестабилен</td>
+            <td style="padding:6px 8px;">деградирует</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; color:var(--accent3);">t = 0</td>
+            <td style="padding:6px 8px;">сингулярность</td>
+            <td style="padding:6px 8px;">не восстановим</td>
+          </tr>
+        </table>
+        <hr class="sep" style="margin:12px 0;">
+        <p style="font-size:13px;"><b style="color:var(--accent3);">Почему шум при большом N?</b><br>
+        DCT вносит ошибку ~Δt. Ошибка Hue = N·Δt.
+        При N=12, Δt=2% → ошибка 24° — видимый шум.
+        <b>Фикс:</b> t×4095 + малый N.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 10: Results ──────────────────────────────── -->
+  <div class="slide" id="s9">
+    <h2>Результаты сжатия</h2>
+    <div class="img-row" style="margin-bottom:28px;">
+      <div class="img-card">
+        <img src="assets/lena.png" alt="original">
+        <span>Оригинал · 474 KB</span>
+      </div>
+      <div class="img-card">
+        <img src="assets/lena_after.png" alt="rgb q30">
+        <span>RGB q=30 · 3 канала</span>
+      </div>
+      <div class="img-card">
+        <img src="assets/lena_fermat.png" alt="fermat">
+        <span>Fermat N=3 q=80</span>
+      </div>
+      <div class="img-card">
+        <img src="assets/lena_fermat_high.png" alt="fermat high">
+        <span>Fermat N=16 q=95</span>
+      </div>
+    </div>
+    <div class="grid3" style="max-width:700px;">
+      <div class="stat">
+        <div class="val">1.6<span style="font-size:28px;">MB</span></div>
+        <div class="lbl">.ezc RGB (3 канала)</div>
+      </div>
+      <div class="stat">
+        <div class="val" style="color:var(--accent2)">524<span style="font-size:28px;">KB</span></div>
+        <div class="lbl">.ezc Fermat (1 канал)</div>
+      </div>
+      <div class="stat">
+        <div class="val" style="color:var(--accent4)">3×</div>
+        <div class="lbl">меньше данных</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 11: CLI ──────────────────────────────────── -->
+  <div class="slide" id="s10">
+    <h2>CLI — использование</h2>
+    <pre style="max-width:780px;">
+<span class="cm"># Стандартное RGB кодирование</span>
+ezcodec <span class="str">encode</span> -i photo.png -o photo.ezc -q <span class="num">80</span>
+ezcodec <span class="str">decode</span> -i photo.ezc -o out.png
+
+<span class="cm"># Fermat — 1 канал вместо 3</span>
+ezcodec <span class="str">encode</span> -i photo.png -o photo.ezc -q <span class="num">80</span> --fermat
+ezcodec <span class="str">encode</span> -i photo.png -o photo.ezc -q <span class="num">95</span> --fermat --fermat-n <span class="num">16</span> --fermat-l <span class="num">0.5</span>
+
+<span class="cm"># Декодирование — режим определяется из заголовка автоматически</span>
+ezcodec <span class="str">decode</span> -i photo.ezc -o out.png
+
+<span class="cm"># Тесты</span>
+ctest --test-dir build</pre>
+    <div style="display:flex; gap:16px; margin-top:20px; flex-wrap:wrap; justify-content:center;">
+      <span class="tag tag-blue">--fermat</span>
+      <span class="tag tag-green">--fermat-n N</span>
+      <span class="tag tag-purple">--fermat-l L</span>
+      <span class="tag tag-red">-q quality</span>
+    </div>
+  </div>
+
+</div><!-- /slides -->
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="btnPrev" onclick="go(-1)" disabled>← Назад</button>
+  <span class="counter" id="counter">1 / 11</span>
+  <button id="btnNext" onclick="go(1)">Вперёд →</button>
+</div>
+
+<!-- Dots -->
+<div class="dots" id="dots"></div>
+
+<div class="kbd-hint">← → или Space для навигации</div>
+
+<script>
+// ── Slide logic ──────────────────────────────────────────
+const slides = Array.from(document.querySelectorAll('.slide'));
+const total  = slides.length;
+let current  = 0;
+
+const dotsEl   = document.getElementById('dots');
+const counterEl= document.getElementById('counter');
+const btnPrev  = document.getElementById('btnPrev');
+const btnNext  = document.getElementById('btnNext');
+
+// Create dots
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+});
+
+function goTo(n) {
+  slides[current].classList.remove('active');
+  slides[current].classList.add('out');
+  setTimeout(() => slides[current].classList.remove('out'), 400);
+
+  current = Math.max(0, Math.min(total - 1, n));
+  slides[current].classList.add('active');
+
+  document.querySelectorAll('.dot').forEach((d, i) =>
+    d.classList.toggle('active', i === current));
+
+  counterEl.textContent = (current + 1) + ' / ' + total;
+  btnPrev.disabled = current === 0;
+  btnNext.disabled = current === total - 1;
+
+  if (current === 4) drawDCT();
+  if (current === 6) drawSpiral();
+}
+
+function go(dir) { goTo(current + dir); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft')                    { e.preventDefault(); go(-1); }
+});
+
+// ── DCT visualisation ─────────────────────────────────────
+function drawDCT() {
+  const c = document.getElementById('dctCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const N = 8;
+  const cellW = c.width / N;
+  const cellH = c.height / N;
+
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  for (let u = 0; u < N; u++) {
+    for (let v = 0; v < N; v++) {
+      // Draw mini DCT basis function
+      const bw = cellW - 4, bh = cellH - 4;
+      const ox = u * cellW + 2, oy = v * cellH + 2;
+      const mini = ctx.createImageData(bw, bh);
+      for (let x = 0; x < bw; x++) {
+        for (let y = 0; y < bh; y++) {
+          const val = Math.cos((Math.PI * u * (2*x+1)) / (2*N))
+                    * Math.cos((Math.PI * v * (2*y+1)) / (2*N));
+          const lum = Math.floor((val + 1) * 127.5);
+          const idx = (y * bw + x) * 4;
+          mini.data[idx]   = lum;
+          mini.data[idx+1] = lum;
+          mini.data[idx+2] = Math.floor(lum * 0.7 + 40);
+          mini.data[idx+3] = 255;
+        }
+      }
+      ctx.putImageData(mini, ox, oy);
+      ctx.strokeStyle = '#21262d';
+      ctx.strokeRect(ox, oy, bw, bh);
+    }
+  }
+
+  // Labels
+  ctx.fillStyle = 'rgba(88,166,255,0.8)';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('u →', c.width / 2, 13);
+  ctx.save();
+  ctx.translate(10, c.height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('v →', 0, 0);
+  ctx.restore();
+}
+
+// ── Fermat Spiral ─────────────────────────────────────────
+function hslToRgb(h, s, l) {
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h * 12) % 12;
+    return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+  };
+  return [f(0)*255, f(8)*255, f(4)*255];
+}
+
+function drawSpiral() {
+  const c = document.getElementById('spiralCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const cx = c.width / 2, cy = c.height / 2;
+  const R  = Math.min(cx, cy) - 12;
+  const N  = 8;
+
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  // HSL disk background
+  const imgD = ctx.createImageData(c.width, c.height);
+  for (let px = 0; px < c.width; px++) {
+    for (let py = 0; py < c.height; py++) {
+      const dx = (px - cx) / R, dy = (py - cy) / R;
+      const r2 = dx*dx + dy*dy;
+      if (r2 > 1) continue;
+      const h = (Math.atan2(dy, dx) / (2*Math.PI) + 1) % 1;
+      const s = Math.sqrt(r2);
+      const [rr, gg, bb] = hslToRgb(h, s, 0.5);
+      const idx = (py * c.width + px) * 4;
+      imgD.data[idx]   = rr;
+      imgD.data[idx+1] = gg;
+      imgD.data[idx+2] = bb;
+      imgD.data[idx+3] = Math.floor((1 - r2*0.3) * 200);
+    }
+  }
+  ctx.putImageData(imgD, 0, 0);
+
+  // Spiral
+  const steps = 1200;
+  ctx.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const s = Math.sqrt(t);
+    const angle = 2 * Math.PI * N * t;
+    const x = cx + s * R * Math.cos(angle);
+    const y = cy + s * R * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Ring label
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI*2);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`N = ${N} витков`, cx, cy + R + 16);
+}
+
+// init
+goTo(0);
+</script>
+</body>
+</html>

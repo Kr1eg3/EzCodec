@@ -6,7 +6,12 @@
 
 class Picture {
 public:
+    // Load as grayscale (1 channel)
     Picture(const char* filename);
+
+    // Load with desired number of channels (1 = grayscale, 3 = RGB)
+    Picture(const char* filename, int desired_channels);
+
     ~Picture();
 
     [[nodiscard]] inline unsigned char* getData() const {
@@ -25,20 +30,33 @@ public:
         return bitdepth;
     }
 
+    [[nodiscard]] inline int getChannels() const {
+        return channels;
+    }
+
     [[nodiscard]] inline bool isValid() const {
         return (data != nullptr && width > 0 && height > 0 && bitdepth > 0);
     }
 
-    [[nodiscard]] std::vector<Block8x8ui16>& getBlocks() {
-        return dataBlocks;
+    // Access blocks for a specific channel (0=R/Gray, 1=G, 2=B)
+    [[nodiscard]] std::vector<Block8x8ui16>& getChannelBlocks(int channel) {
+        return channelBlocks[channel];
+    }
+    [[nodiscard]] const std::vector<Block8x8ui16>& getChannelBlocks(int channel) const {
+        return channelBlocks[channel];
     }
 
+    // Legacy accessor: returns channel 0 (backward compat)
+    [[nodiscard]] std::vector<Block8x8ui16>& getBlocks() {
+        return channelBlocks[0];
+    }
     [[nodiscard]] const std::vector<Block8x8ui16>& getBlocks() const {
-        return dataBlocks;
+        return channelBlocks[0];
     }
 
     template<typename T, TxSize Size>
-    [[nodiscard]] std::vector<Block<T, Size>> splitIntoBlocks() const {
+    [[nodiscard]] std::vector<Block<T, Size>> splitIntoBlocks(int channelIndex = 0,
+                                                               int channelStride = 1) const {
         constexpr int blockDim = getTxDimension(Size);
         const int blockCountX = (width + blockDim - 1) / blockDim;
         const int blockCountY = (height + blockDim - 1) / blockDim;
@@ -59,7 +77,8 @@ public:
                         int imgY = by + row;
 
                         if (imgX < width && imgY < height) {
-                            block.at(row, col) = static_cast<T>(data[imgY * width + imgX]);
+                            block.at(row, col) = static_cast<T>(
+                                data[(imgY * width + imgX) * channelStride + channelIndex]);
                         } else {
                             block.at(row, col) = T{};
                         }
@@ -72,13 +91,14 @@ public:
     }
 
 private:
-    int width = 0;
-    int height = 0;
+    int width    = 0;
+    int height   = 0;
     int bitdepth = 0;
+    int channels = 1;
 
-    // Raw image data in [0, 255] range from stbi_load (grayscale)
+    // Raw image data from stbi_load (interleaved if channels > 1)
     unsigned char* data = nullptr;
 
-    // Image split into 8x8 pixel blocks on load
-    std::vector<Block8x8ui16> dataBlocks;
+    // Per-channel 8x8 pixel blocks: channelBlocks[c] for channel c
+    std::vector<std::vector<Block8x8ui16>> channelBlocks;
 };
